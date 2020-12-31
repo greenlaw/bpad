@@ -213,18 +213,15 @@ class Component(ABC):
                 logger.error(f"CalledProcessError encountered while attempting to create resources with yaml file [{yaml_path}].\nException: {e}\nSTDOUT: {e.output}\nSTDERR: {e.stderr}")
                 raise e
 
-    @abstractmethod
     def build(self, deployment_name, nocache=False):
-        raise NotImplementedError
+        pass
 
-    @abstractmethod
     def deploy(self, deployment_name, tf_outputs=None):
-        raise NotImplementedError
+        pass
 
-    @abstractmethod
     def package(self, deployment_name):
-        raise NotImplementedError
+        pass
 
-    @abstractmethod
     def undeploy(self, deployment_name, tf_outputs=None):
-        raise NotImplementedError
+        pass
+
