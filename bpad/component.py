@@ -169,6 +169,50 @@ class Component(ABC):
                 f"CalledProcessError encountered while attempting to apply yaml file [{yaml_url}].\nException: {e}\nSTDOUT: {e.output}\nSTDERR: {e.stderr}")
             raise e
 
+    @staticmethod
+    def _kubectl_create(yaml_path, expand_env_vars=True):
+        """
+        Perform a kubectl create operation using the specified yaml file.
+
+        A create operation is needed (instead of apply) sometimes, e.g. when
+        creating a job using `generateName` (i.e. asking k8s to assign a unique
+        name to the created job pod).
+
+        Args:
+            yaml_path (`str`): Path to yaml file on disk containing k8s
+                configuration to be created.
+            expand_env_vars (`bool`): If True, k8s configuration will have any
+                environment variabls (e.g. $VARNAME or ${VARNAME}) replaced
+                with their present values, if any.
+
+        Returns:
+            The `CompletedProcess` object.
+
+        Raises:
+            CalledProcessError: If the kubectl command returned nonzero status.
+            OSError: If there was a problem opening the yaml file.
+        """
+        cmd = "kubectl create -f -"
+
+        with open(yaml_path, 'r') as f:
+            if expand_env_vars:
+                k8s_yaml = os.path.expandvars(f.read())
+            else:
+                k8s_yaml = f.read()
+            try:
+                logger.info(f"Creating resources using k8s yaml:\n{k8s_yaml}")
+                return subprocess.run(
+                    cmd.split(),
+                    input=k8s_yaml,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    check=True
+                )
+            except subprocess.CalledProcessError as e:
+                logger.error(f"CalledProcessError encountered while attempting to create resources with yaml file [{yaml_path}].\nException: {e}\nSTDOUT: {e.output}\nSTDERR: {e.stderr}")
+                raise e
+
     @abstractmethod
     def build(self, deployment_name, nocache=False):
         raise NotImplementedError
